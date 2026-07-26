@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Bus, GraduationCap, Clock, CircleCheck, Eye } from "lucide-react"
+import { Bus, GraduationCap, Clock, CircleCheck } from "lucide-react"
 import { KpiCard } from "@/components/kpi-card"
 import { NotificationCard } from "@/components/notification-card"
 import { AlertBanner } from "@/components/alert-banner"
@@ -74,6 +74,7 @@ function LoadingRightColumn() {
 export default function DashboardPage() {
   const [activity] = useState<ActivityItem[]>(initialActivity)
   const [alerts] = useState<AlertItem[]>(initialAlerts)
+  const [selectedBus, setSelectedBus] = useState<number | null>(null)
 
   const { useDashboardStats, useLiveBuses } = useDashboard()
 
@@ -138,7 +139,11 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2 items-start">
-            <DashboardMap buses={liveBuses} />
+            <DashboardMap
+              buses={liveBuses}
+              selectedBusId={selectedBus}
+              onBusSelect={setSelectedBus}
+            />
 
             <div className="flex flex-col gap-4">
               <div className="rounded-box bg-base-100 shadow-card">
@@ -172,11 +177,23 @@ export default function DashboardPage() {
                 ) : (
                   <div className="divide-y divide-base-200">
                     {liveBuses.map((b) => (
-                      <div
+                      <button
                         key={b.busId}
-                        className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors duration-150 hover:bg-base-200/50"
+                        type="button"
+                        className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-all duration-150 ${
+                          selectedBus === b.busId
+                            ? "bg-primary/5"
+                            : "hover:bg-base-200/50"
+                        }`}
+                        onClick={() => setSelectedBus(b.busId)}
                       >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <div
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-150 ${
+                            selectedBus === b.busId
+                              ? "bg-primary text-primary-content shadow-sm"
+                              : "bg-primary/10 text-primary"
+                          }`}
+                        >
                           <Bus size={16} />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -190,7 +207,7 @@ export default function DashboardPage() {
                               : "No position data"}
                           </div>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}

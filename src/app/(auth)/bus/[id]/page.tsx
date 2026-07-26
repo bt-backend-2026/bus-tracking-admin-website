@@ -1,19 +1,21 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Plus, Trash2, Download } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, Download, Save, X, ArrowUp, ArrowDown, Lock } from "lucide-react"
 import { toast } from "sonner"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { StatusBadge } from "@/components/status-badge"
 import { FileUploadBtn } from "@/components/file-upload-btn"
 import { ImportPreviewModal } from "@/components/import-preview-modal"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { PlateChangeModal } from "@/components/plate-change-modal"
 import useBus from "@/hooks/use-bus"
 import useStudent from "@/hooks/use-student"
 import { exportStudentsRoster } from "@/services/student-service"
 import type { StudentRequest, StudentImportRowResult } from "@/types/models/student"
+import type { PlateChangeAuthorizeRequest, PlateUpdateRequest, CheckpointRequest } from "@/types/models/bus"
 
 const statusLabel: Record<string, string> = {
   active: "Active",
@@ -22,7 +24,7 @@ const statusLabel: Record<string, string> = {
 
 export default function BusDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { useBusDetail, useBusCheckpoints, useAddStudentToBus } = useBus()
+  const { useBusDetail, useBusCheckpoints, useAddStudentToBus, useAuthorizePlateChange, useUpdatePlate, useReplaceCheckpoints } = useBus()
   const { useImportPreview, useImportCommit, useDeleteStudent } = useStudent()
 
   const { data, isLoading, error } = useBusDetail(id)
@@ -34,6 +36,9 @@ export default function BusDetailPage() {
   const importCommit = useImportCommit()
   const addStudent = useAddStudentToBus()
   const deleteStudent = useDeleteStudent()
+  const authorizePlate = useAuthorizePlateChange()
+  const updatePlate = useUpdatePlate()
+  const replaceCheckpoints = useReplaceCheckpoints()
 
   const [importRows, setImportRows] = useState<StudentImportRowResult[]>([])
   const [importPreviewOpen, setImportPreviewOpen] = useState(false)
@@ -41,6 +46,7 @@ export default function BusDetailPage() {
   const [importErrorCount, setImportErrorCount] = useState(0)
 
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
+  const [plateChangeOpen, setPlateChangeOpen] = useState(false)
 
   const [addFormOpen, setAddFormOpen] = useState(false)
   const [formData, setFormData] = useState<StudentRequest>({
@@ -52,6 +58,49 @@ export default function BusDetailPage() {
     checkpoint: "",
   })
   const formRef = useRef<HTMLDialogElement>(null)
+
+  const [checkpointItems, setCheckpointItems] = useState<{ id?: number; label: string }[]>([])
+
+  useEffect(() => {
+    if (checkpoints.length > 0) {
+      setCheckpointItems(checkpoints.map((c) => ({ id: c.id, label: c.label })))
+    }
+  }, [checkpoints])
+
+  const [newCheckpoint, setNewCheckpoint] = useState("")
+  const [checkpointDirty, setCheckpointDirty] = useState(false)
+
+  const handleAddCheckpoint = () => {
+    if (!newCheckpoint.trim()) return
+    setCheckpointItems((prev) => [...prev, { label: newCheckpoint.trim() }])
+    setNewCheckpoint("")
+    setCheckpointDirty(true)
+  }
+
+  const handleRemoveCheckpoint = (index: number) => {
+    setCheckpointItems((prev) => prev.filter((_, i) => i !== index))
+    setCheckpointDirty(true)
+  }
+
+  const handleMoveCheckpointUp = (index: number) => {
+    if (index === 0) return
+    setCheckpointItems((prev) => {
+      const next = [...prev]
+      ;[next[index - 1], next[index]] = [next[index], next[index - 1]]
+      return next
+    })
+    setCheckpointDirty(true)
+  }
+
+  const handleMoveCheckpointDown = (index: number) => {
+    setCheckpointItems((prev) => {
+      if (index === prev.length - 1) return prev
+      const next = [...prev]
+      ;[next[index], next[index + 1]] = [next[index + 1], next[index]]
+      return next
+    })
+    setCheckpointDirty(true)
+  }
 
   const handleImportFile = useCallback(async (file: File) => {
     const res = await importPreview.mutateAsync({ busId: id, file })
@@ -107,6 +156,41 @@ export default function BusDetailPage() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
+  const handlePlateAuthorize = useCallback(
+    async (data: PlateChangeAuthorizeRequest) => {
+      const res = await authorizePlate.mutateAsync({ busId: id, data })
+      return { unlockToken: res.data.unlockToken }
+    },
+    [id, authorizePlate],
+  )
+
+  const handlePlateUpdate = useCallback(
+    async (data: PlateUpdateRequest) => {
+      await updatePlate.mutateAsync({ busId: id, data })
+    },
+    [id, updatePlate],
+  )
+
+  const handleSaveCheckpoints = useCallback(
+    async (data: CheckpointRequest) => {
+      await replaceCheckpoints.mutateAsync({ busId: id, data })
+    },
+    [id, replaceCheckpoints],
+  )
+
+  const handleSaveCheckpointsInline = useCallback(async () => {
+    const valid = checkpointItems.filter((i) => i.label.trim())
+    if (valid.length === 0) {
+      toast.error("At least one checkpoint is required")
+      return
+    }
+    await handleSaveCheckpoints({
+      checkpoints: valid.map((i) => (i.id ? { id: i.id, label: i.label.trim() } : { label: i.label.trim() })),
+    })
+    setCheckpointDirty(false)
+    toast.success("Checkpoints saved")
+  }, [checkpointItems, handleSaveCheckpoints])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -138,84 +222,164 @@ export default function BusDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link href="/bus" className="inline-flex items-center gap-1 text-xs text-base-content/40 hover:text-base-content/70 transition-colors">
-        <ArrowLeft size={14} />
-        Back to Buses
-      </Link>
-
       <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Buses", href: "/bus" }, { label: bus.displayId }]} />
 
-      <div className="rounded-box bg-base-100 p-4 shadow-card">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="t-h1">{bus.displayId}</h1>
-              <StatusBadge status={bus.status} label={statusLabel[bus.status.toLowerCase()] ?? bus.status} />
-            </div>
-            <p className="t-body text-base-content/50 mt-0.5">{bus.plate}</p>
+      <div className="flex items-start gap-3">
+        <Link href="/bus" className="btn btn-ghost btn-xs btn-square mt-0.5 shrink-0">
+          <ArrowLeft size={16} />
+        </Link>
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <span className="text-xl font-bold">{bus.displayId.charAt(0).toUpperCase()}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight">{bus.displayId}</h1>
+            <StatusBadge status={bus.status} label={statusLabel[bus.status.toLowerCase()] ?? bus.status} />
+            <button
+              className="btn btn-primary btn-xs gap-1.5 ml-auto"
+              disabled={!checkpointDirty || replaceCheckpoints.isPending}
+              onClick={handleSaveCheckpointsInline}
+            >
+              {replaceCheckpoints.isPending ? (
+                <span className="loading loading-spinner loading-xs" />
+              ) : (
+                <Save size={12} />
+              )}
+              Save
+            </button>
           </div>
+          <p className="mt-0.5 text-sm text-base-content/50 truncate">
+            {checkpoints.length > 0
+              ? checkpoints
+                  .slice()
+                  .sort((a, b) => a.order - b.order)
+                  .map((c) => c.label)
+                  .join(" → ")
+              : "No checkpoints"}
+          </p>
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-box bg-base-100 p-3 shadow-card">
-          <h2 className="t-label font-semibold mb-2">Bus Info</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-base-content/40">Display ID</span>
-              <span className="text-base-content">{bus.displayId}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-base-content/40">Plate</span>
-              <span className="text-base-content font-mono">{bus.plate}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-base-content/40">Capacity</span>
-              <span className="text-base-content">{bus.capacity ?? "—"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-base-content/40">Shift</span>
-              <span className="text-base-content">{bus.shift ?? "—"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-base-content/40">Route</span>
-              <span className="text-base-content text-right max-w-56">{bus.routeName ?? "—"}</span>
-            </div>
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1fr_2fr] items-start">
+        <div className="rounded-box bg-base-100 p-4 shadow-card">
+          <h2 className="t-label font-semibold mb-3">Bus Details</h2>
+          <div className="flex flex-col gap-3">
+            <label className="form-control w-full">
+              <div className="label py-0 pb-1">
+                <span className="label-text text-xs text-base-content/40">Plate Number</span>
+              </div>
+              <div className="input input-bordered input-md bg-base-200/50 flex items-center text-sm h-10 px-3 rounded-lg w-full gap-2">
+                <span className="flex-1 font-mono">{bus.plate}</span>
+                <Lock size={13} className="text-base-content/20 shrink-0" />
+              </div>
+              <button
+                className="label-text text-primary link link-hover mt-1 text-xs"
+                onClick={() => setPlateChangeOpen(true)}
+              >
+                Request Plate Change
+              </button>
+            </label>
+            <label className="form-control w-full">
+              <div className="label py-0 pb-1">
+                <span className="label-text text-xs text-base-content/40">Capacity</span>
+              </div>
+              <div className="input input-bordered input-md bg-base-200/50 flex items-center text-sm h-10 px-3 rounded-lg w-full">
+                {bus.capacity ?? "—"}
+              </div>
+            </label>
+            <label className="form-control w-full">
+              <div className="label py-0 pb-1">
+                <span className="label-text text-xs text-base-content/40">Shift</span>
+              </div>
+              <div className="input input-bordered input-md bg-base-200/50 flex items-center text-sm h-10 px-3 rounded-lg w-full">
+                {bus.shift ?? "—"}
+              </div>
+            </label>
+            <label className="form-control w-full">
+              <div className="label py-0 pb-1">
+                <span className="label-text text-xs text-base-content/40">Driver</span>
+              </div>
+              <div className="input input-bordered input-md bg-base-200/50 flex items-center text-sm h-10 px-3 rounded-lg w-full">
+                {bus.driverName ?? "—"}
+              </div>
+            </label>
+            <label className="form-control w-full">
+              <div className="label py-0 pb-1">
+                <span className="label-text text-xs text-base-content/40">Driver Phone</span>
+              </div>
+              <div className="input input-bordered input-md bg-base-200/50 flex items-center text-sm h-10 px-3 rounded-lg w-full">
+                {bus.driverPhone ?? "—"}
+              </div>
+            </label>
+            <label className="form-control w-full">
+              <div className="label py-0 pb-1">
+                <span className="label-text text-xs text-base-content/40">Status</span>
+              </div>
+              <div className="input input-bordered input-md bg-base-200/50 flex items-center text-sm h-10 px-3 rounded-lg w-full">
+                <StatusBadge status={bus.status} label={statusLabel[bus.status.toLowerCase()] ?? bus.status} />
+              </div>
+            </label>
           </div>
         </div>
 
-        <div className="rounded-box bg-base-100 p-3 shadow-card">
-          <h2 className="t-label font-semibold mb-2">Driver Assignment</h2>
-          {bus.driverName ? (
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-base-content/40">Driver</span>
-                <span className="text-base-content font-medium">{bus.driverName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-base-content/40">Phone</span>
-                <span className="text-base-content">{bus.driverPhone ?? "—"}</span>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-base-content/40 py-4 text-center">No driver assigned.</p>
-          )}
+        <div className="rounded-box bg-base-100 p-4 shadow-card">
+          <h2 className="t-label font-semibold mb-3">Route</h2>
+          <div className="space-y-3">
+            {checkpointItems.length > 0 ? (
+              checkpointItems.map((cp, i) => (
+                <div key={i} className="flex items-center gap-3 rounded-lg bg-base-200/50 p-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                    {i + 1}
+                  </div>
+                  <span className="flex-1 text-sm">{cp.label}</span>
+                  <button
+                    className="btn btn-ghost btn-xs btn-square text-base-content/20 hover:text-base-content/50"
+                    aria-label="Move up"
+                    disabled={i === 0}
+                    onClick={() => handleMoveCheckpointUp(i)}
+                  >
+                    <ArrowUp size={13} />
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-xs btn-square text-base-content/20 hover:text-base-content/50"
+                    aria-label="Move down"
+                    disabled={i === checkpointItems.length - 1}
+                    onClick={() => handleMoveCheckpointDown(i)}
+                  >
+                    <ArrowDown size={13} />
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-xs btn-square text-base-content/20 hover:text-error"
+                    aria-label={`Remove checkpoint ${i + 1}`}
+                    onClick={() => handleRemoveCheckpoint(i)}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-base-content/40 py-2">No checkpoints.</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-base-200">
+            <input
+              className="input input-sm flex-1 min-w-0"
+              placeholder="Add checkpoint"
+              value={newCheckpoint}
+              onChange={(e) => setNewCheckpoint(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleAddCheckpoint() }}
+            />
+            <button
+              className="btn btn-primary btn-sm gap-1"
+              disabled={!newCheckpoint.trim()}
+              onClick={handleAddCheckpoint}
+            >
+              <Plus size={14} />
+              Add
+            </button>
+          </div>
         </div>
       </div>
-
-      {checkpoints.length > 0 && (
-        <div className="rounded-box bg-base-100 p-3 shadow-card">
-          <h2 className="t-label font-semibold mb-2">Checkpoints</h2>
-          <div className="space-y-1 text-sm">
-            {checkpoints.map((cp) => (
-              <div key={cp.id} className="flex items-center gap-2">
-                <span className="text-base-content/40">{cp.order + 1}.</span>
-                <span className="text-base-content">{cp.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="rounded-box bg-base-100 p-3 shadow-card">
         <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
@@ -253,11 +417,12 @@ export default function BusDetailPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th className="w-36">Name</th>
-                  <th className="w-20">Grade</th>
-                  <th className="w-28">Checkpoint</th>
-                  <th className="w-32">Parent</th>
-                  <th className="w-32">Phone</th>
+                  <th>Name</th>
+                  <th>Parent Name</th>
+                  <th>Phone Number</th>
+                  <th>Secondary Phone</th>
+                  <th>Address</th>
+                  <th>Stop</th>
                   <th className="w-12"></th>
                 </tr>
               </thead>
@@ -265,10 +430,11 @@ export default function BusDetailPage() {
                 {bus.students.map((s) => (
                   <tr key={s.id}>
                     <td className="font-medium text-sm">{s.name}</td>
-                    <td className="text-sm text-base-content/60">{s.klass ?? "—"}</td>
-                    <td className="text-sm text-base-content/60">{s.checkpoint ?? "—"}</td>
                     <td className="text-sm text-base-content/60">{s.parentName ?? "—"}</td>
                     <td className="text-sm text-base-content/60 font-mono text-xs">{s.phone ?? "—"}</td>
+                    <td className="text-sm text-base-content/60 font-mono text-xs">{s.secondaryPhone ?? "—"}</td>
+                    <td className="text-sm text-base-content/60">—</td>
+                    <td className="text-sm text-base-content/60">{s.checkpoint ?? "—"}</td>
                     <td>
                       <button
                         className="btn btn-ghost btn-xs text-base-content/30 hover:text-error"
@@ -310,6 +476,16 @@ export default function BusDetailPage() {
         loading={deleteStudent.isPending}
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      <PlateChangeModal
+        open={plateChangeOpen}
+        currentPlate={bus.plate}
+        authorizePending={authorizePlate.isPending}
+        updatePending={updatePlate.isPending}
+        onAuthorize={handlePlateAuthorize}
+        onUpdatePlate={handlePlateUpdate}
+        onCancel={() => setPlateChangeOpen(false)}
       />
 
       <dialog ref={formRef} className="modal" open={addFormOpen} onClose={() => setAddFormOpen(false)}>

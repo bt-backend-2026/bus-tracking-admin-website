@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Search, Bus, Eye } from "lucide-react"
+import { Search, Bus, Eye, PencilLine } from "lucide-react"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { StatusBadge } from "@/components/status-badge"
 import useBus from "@/hooks/use-bus"
@@ -125,10 +125,17 @@ export default function BusPage() {
                     />
                   </td>
                   <td className="w-0">
-                    <div className="tooltip" data-tip="View details">
-                      <button type="button" className="btn btn-ghost btn-xs btn-square" onClick={() => router.push(`/bus/${b.id}`)}>
-                        <Eye size={16} />
-                      </button>
+                    <div className="flex items-center gap-0.5">
+                      <div className="tooltip" data-tip="View details">
+                        <button type="button" className="btn btn-ghost btn-xs btn-square" onClick={() => router.push(`/bus/${b.id}`)}>
+                          <Eye size={16} />
+                        </button>
+                      </div>
+                      <div className="tooltip" data-tip="Edit bus">
+                        <button type="button" className="btn btn-ghost btn-xs btn-square text-base-content/30 hover:text-primary" onClick={() => router.push(`/bus/${b.id}/edit`)}>
+                          <PencilLine size={16} />
+                        </button>
+                      </div>
                     </div>
                   </td>
                 </tr>
