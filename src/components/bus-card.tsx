@@ -23,31 +23,21 @@ export function BusCard({ busNumber, route, driver, capacity, status, compact }:
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <div className="t-label text-base-content truncate">{busNumber}</div>
+            <div>
+              <div className="t-label text-base-content truncate">{busNumber}</div>
+              <div className={`t-body text-base-content/50 truncate ${compact ? "text-xs" : ""}`}>
+                {route}
+              </div>
+            </div>
             <StatusBadge status={status} />
           </div>
-          <div className={`t-body text-base-content/50 truncate ${compact ? "" : "mt-0.5"}`}>{route}</div>
         </div>
       </div>
-      {!compact && (
-        <div className="mt-3 grid grid-cols-2 gap-2 border-t border-base-200 pt-3">
-          <div>
-            <div className="t-micro text-base-content/30">Driver</div>
-            <div className="t-body text-base-content">{driver}</div>
-          </div>
-          <div>
-            <div className="t-micro text-base-content/30">Capacity</div>
-            <div className="t-body text-base-content">{capacity}</div>
-          </div>
-        </div>
-      )}
-      {compact && (
-        <div className="mt-2 flex items-center gap-3 text-xs text-base-content/50">
-          <span>{driver}</span>
-          <span className="text-base-content/20">|</span>
-          <span>{capacity}</span>
-        </div>
-      )}
+      <div className={`flex items-center gap-2 text-xs text-base-content/50 ${compact ? "mt-2" : "mt-2.5 border-t border-base-200 pt-2.5"}`}>
+        <span>{driver}</span>
+        <span className="text-base-content/20">&middot;</span>
+        <span className="tabular-nums">{capacity}</span>
+      </div>
     </div>
   )
 }

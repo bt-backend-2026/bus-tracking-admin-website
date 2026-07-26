@@ -58,6 +58,17 @@
   --sh-md: 0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
 }
 
+@theme inline {
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --motion-duration-instant: 0ms;
+  --motion-duration-fast: 150ms;
+  --motion-duration-settle: 280ms;
+  --motion-duration-notification: 420ms;
+  --motion-duration-pulse: 2s;
+  --motion-duration-hover: 200ms;
+}
+
 @utility t-display {
   font-size: 2rem;
   font-weight: 800;
@@ -114,16 +125,58 @@
 }
 
 @utility dot-pulse {
-  animation: pulse-dot 2s ease-in-out infinite;
+  animation: pulse-dot var(--motion-duration-pulse) ease-in-out infinite;
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+@utility animate-settle {
+  animation: settle-in var(--motion-duration-settle) var(--motion-ease-out) both;
+}
+
+@keyframes settle-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@utility animate-notification {
+  animation: notification-in var(--motion-duration-notification) var(--motion-ease-out) both;
+}
+
+@keyframes notification-in {
+  from { opacity: 0; transform: translateY(-100%) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@utility animate-fade-in {
+  animation: fade-in var(--motion-duration-settle) var(--motion-ease-out) both;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@utility tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility marker-glow {
+  box-shadow: 0 0 0 0 rgb(26 86 160 / 0.4);
+  animation: marker-pulse 2s var(--motion-ease-out) infinite;
+}
+
+@keyframes marker-pulse {
+  0% { box-shadow: 0 0 0 0 rgb(26 86 160 / 0.4); }
+  70% { box-shadow: 0 0 0 12px rgb(26 86 160 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(26 86 160 / 0); }
 }
 
 @utility card-hover {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform var(--motion-duration-hover) var(--motion-ease-out), box-shadow var(--motion-duration-hover) var(--motion-ease-out);
   &:hover {
     transform: translateY(-2px);
     box-shadow: var(--sh-md);
@@ -155,8 +208,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dot-pulse {
-    animation: none;
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
   .card-hover:hover {
     transform: none;

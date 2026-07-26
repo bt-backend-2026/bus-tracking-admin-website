@@ -17,27 +17,24 @@ export type TripStatus =
   | "on-leave"
   | "pending"
 
-const statusConfig: Record<
-  string,
-  { badge: string; dotColor: string; textColor: string; pulse: boolean }
-> = {
-  "on-the-way": { badge: "badge-ghost", dotColor: "bg-success", textColor: "text-success", pulse: true },
-  "in-transit": { badge: "badge-ghost", dotColor: "bg-info", textColor: "text-info", pulse: false },
-  "on-board": { badge: "badge-ghost", dotColor: "bg-success", textColor: "text-success", pulse: false },
-  "arriving-soon": { badge: "badge-ghost", dotColor: "bg-warning", textColor: "text-warning", pulse: false },
-  waiting: { badge: "badge-ghost", dotColor: "bg-neutral/40", textColor: "text-base-content/50", pulse: false },
-  emergency: { badge: "badge-ghost", dotColor: "bg-error", textColor: "text-error", pulse: true },
-  "off-duty": { badge: "badge-ghost", dotColor: "bg-neutral/40", textColor: "text-base-content/50", pulse: false },
-  completed: { badge: "badge-ghost", dotColor: "bg-success", textColor: "text-success", pulse: false },
-  "in-progress": { badge: "badge-ghost", dotColor: "bg-info", textColor: "text-info", pulse: true },
-  scheduled: { badge: "badge-ghost", dotColor: "bg-neutral/40", textColor: "text-base-content/50", pulse: false },
-  delayed: { badge: "badge-ghost", dotColor: "bg-warning", textColor: "text-warning", pulse: false },
-  cancelled: { badge: "badge-ghost", dotColor: "bg-error", textColor: "text-error", pulse: false },
-  active: { badge: "badge-ghost", dotColor: "bg-success", textColor: "text-success", pulse: false },
-  inactive: { badge: "badge-ghost", dotColor: "bg-neutral/40", textColor: "text-base-content/50", pulse: false },
-  "on-duty": { badge: "badge-ghost", dotColor: "bg-success", textColor: "text-success", pulse: false },
-  "on-leave": { badge: "badge-ghost", dotColor: "bg-warning", textColor: "text-warning", pulse: false },
-  pending: { badge: "badge-ghost", dotColor: "bg-warning", textColor: "text-warning", pulse: false },
+const statusConfig: Record<string, { badge: string; dotBg: string; pulse: boolean }> = {
+  "on-the-way": { badge: "badge-success", dotBg: "bg-white", pulse: true },
+  "in-transit": { badge: "badge-info", dotBg: "bg-white", pulse: false },
+  "on-board": { badge: "badge-success", dotBg: "bg-white", pulse: false },
+  "arriving-soon": { badge: "badge-warning", dotBg: "bg-white", pulse: false },
+  waiting: { badge: "badge-ghost", dotBg: "bg-neutral/40", pulse: false },
+  emergency: { badge: "badge-error", dotBg: "bg-white", pulse: true },
+  "off-duty": { badge: "badge-ghost", dotBg: "bg-neutral/40", pulse: false },
+  completed: { badge: "badge-success", dotBg: "bg-white", pulse: false },
+  "in-progress": { badge: "badge-info", dotBg: "bg-white", pulse: true },
+  scheduled: { badge: "badge-ghost", dotBg: "bg-neutral/40", pulse: false },
+  delayed: { badge: "badge-warning", dotBg: "bg-white", pulse: false },
+  cancelled: { badge: "badge-error", dotBg: "bg-white", pulse: false },
+  active: { badge: "badge-success", dotBg: "bg-white", pulse: false },
+  inactive: { badge: "badge-ghost", dotBg: "bg-neutral/40", pulse: false },
+  "on-duty": { badge: "badge-success", dotBg: "bg-white", pulse: false },
+  "on-leave": { badge: "badge-warning", dotBg: "bg-white", pulse: false },
+  pending: { badge: "badge-warning", dotBg: "bg-white", pulse: false },
 }
 
 interface StatusBadgeProps {
@@ -48,15 +45,16 @@ interface StatusBadgeProps {
 export function StatusBadge({ status, label }: StatusBadgeProps) {
   const config = statusConfig[status.toLowerCase()] ?? {
     badge: "badge-ghost",
-    dotColor: "bg-neutral/40",
-    textColor: "text-base-content/50",
+    dotBg: "bg-neutral/40",
     pulse: false,
   }
 
+  const isGhost = config.badge === "badge-ghost"
+
   return (
-    <span className={`badge badge-sm gap-1.5 ${config.badge} ${config.textColor}`}>
+    <span className={`badge badge-sm gap-1.5 ${config.badge} ${isGhost ? "text-base-content/50" : ""}`}>
       <span
-        className={`dot ${config.dotColor} ${config.pulse ? "dot-pulse" : ""}`}
+        className={`dot ${config.dotBg} ${config.pulse ? "dot-pulse" : ""}`}
       />
       {label ?? status}
     </span>

@@ -203,7 +203,10 @@ A shadow-based elevation system with four distinct levels. Surfaces are flat at 
 
 ### Status Badges
 - **Shape:** Fully pill (9999px), 2px 10px padding, 12px / 600 weight.
-- **Color mapping:** Active → Leaf Green. On-route → Signal Blue. Arriving-soon → Warm Ember. Delayed → Amber Alert. Maintenance → Mid Ink.
+- **Variant — filled:** Color badge fill with white text + dot. Used for active states that need visual weight. Map: success→green, info→blue, warning→orange, error→red, ghost→muted.
+- **Variant — ghost:** Transparent with muted dot. Used for low-emphasis states (waiting, off-duty, scheduled, inactive).
+- **Pulse dot:** Added to `on-the-way`, `emergency`, `in-progress` — the universal "live" signal.
+- **Color mapping (filled):** Active / On-the-way / On-board / Completed / On-duty → `badge-success`. In-transit / In-progress → `badge-info`. Arriving-soon / Delayed / On-leave / Pending → `badge-warning`. Emergency / Cancelled → `badge-error`. Waiting / Off-duty / Scheduled / Inactive → `badge-ghost` with muted text.
 - **Compact variant:** Reduced padding, 10px font, no icon.
 
 ### Alerts / Banners
@@ -211,7 +214,53 @@ A shadow-based elevation system with four distinct levels. Surfaces are flat at 
 - **Semantic mapping:** Warning → Amber Alert left accent. Info → Info Blue left accent. Success → Leaf Green left accent. Error → Stop Red left accent.
 - **Icon:** Left-aligned semantic icon with matching background fill.
 
-## 6. Do's and Don'ts
+## 6. Motion
+
+Motion exists to communicate movement and state — never to decorate. Subtle, purposeful, mobility-grade. Eased settling for UI; linear for position interpolation.
+
+### Motion Tokens
+- **`--motion-ease-out`:** `cubic-bezier(0.16, 1, 0.3, 1)` — premium settle curve for cards, sheets, screen transitions.
+- **`--motion-ease-in-out`:** `cubic-bezier(0.65, 0, 0.35, 1)` — fade transitions.
+- **`--motion-duration-fast`:** 150ms — micro-interactions, hover states.
+- **`--motion-duration-settle`:** 280ms — default for cards, sheets, panels settling into place.
+- **`--motion-duration-notification`:** 420ms — toast entry animation; auto-dismiss after 3.4s.
+- **`--motion-duration-pulse`:** 2s — marker ring + status dot pulse interval.
+
+### Animation Utilities
+| Utility | Purpose | Keyframes |
+|---------|---------|-----------|
+| `animate-settle` | Cards, panels entering view | fade + translateY(8px) at 280ms ease-out |
+| `animate-notification` | Toast notifications | slide + fade from top at 420ms ease-out |
+| `animate-fade-in` | Simple content reveals | opacity at 280ms ease-out |
+| `dot-pulse` | Live status indicator | opacity + scale at 2s ease-in-out |
+| `marker-glow` | Live bus map marker | box-shadow ring pulse at 2s ease-out |
+
+### Named Rules
+**The Motion-Purpose Rule.** Every animation serves state communication — never decoration. No orchestrated page-load sequences, no bounce, no elastic.
+**Reduced Motion:** All animated elements respect `prefers-reduced-motion: reduce` with a global override that collapses all durations to 0.01ms.
+
+## 7. Utilities
+
+### Tabular Numerals
+Use `tabular-nums` class on any element displaying dynamic numeric data (ETAs, speeds, distances, counts) to prevent digit jitter as values update. Applied via the `@utility tabular-nums` CSS class.
+
+## 8. Component Library Structure
+
+### Architecture
+```
+Primitives                        Composites
+───────────                       ──────────
+PrimaryButton · StatusBadge       BusCard · NotificationCard
+Avatar · Icon                     TripTimeline · AlertBanner
+                                  MapBottomSheet · DashboardMap
+```
+
+- **LiveMap** — shared verbatim by Dashboard and detail views; only overlays differ.
+- **StatusBadge** — maps one trip-state enum to a tone; guarantees consistent language across all pages.
+- **State ownership:** Data is owned by React Query (server state). Components are presentational and prop-driven.
+- **Theme-driven:** All components use DaisyUI semantic tokens via CSS; theming the whole app = swapping token values.
+
+## 9. Do's and Don'ts
 
 ### Do:
 - **Do** use Signal Blue for all primary actions. One primary action per view.
