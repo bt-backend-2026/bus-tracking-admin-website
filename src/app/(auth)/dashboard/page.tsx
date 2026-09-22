@@ -7,6 +7,7 @@ import { NotificationCard } from "@/components/notification-card"
 import { AlertBanner } from "@/components/alert-banner"
 import { DashboardMap } from "@/components/dashboard-map"
 import useDashboard from "@/hooks/use-dashboard"
+import useLiveLocation from "@/hooks/use-live-location"
 
 interface ActivityItem {
   id: number
@@ -77,6 +78,7 @@ export default function DashboardPage() {
   const [selectedBus, setSelectedBus] = useState<number | null>(null)
 
   const { useDashboardStats, useLiveBuses } = useDashboard()
+  const { useLiveLocationUpdates } = useLiveLocation()
 
   const { data: statsRes, isLoading: statsLoading } = useDashboardStats()
   const { data: liveRes, isLoading: liveLoading, isError: liveError } = useLiveBuses()
@@ -84,6 +86,20 @@ export default function DashboardPage() {
   const stats = statsRes?.data ?? null
   const liveBuses = useMemo(() => liveRes?.data ?? [], [liveRes])
   const loading = statsLoading || liveLoading
+
+  const liveBusIds = useMemo(() => liveBuses.map((b) => b.busId), [liveBuses])
+  const livePositions = useLiveLocationUpdates(liveBusIds)
+
+  const mergedBuses = useMemo(
+    () =>
+      liveBuses.map((b) => ({
+        ...b,
+        latitude: livePositions[b.busId]?.latitude ?? b.latitude,
+        longitude: livePositions[b.busId]?.longitude ?? b.longitude,
+        recordedAt: livePositions[b.busId]?.recordedAt ?? b.recordedAt,
+      })),
+    [liveBuses, livePositions],
+  )
 
   return (
     <div className="space-y-4">
@@ -140,7 +156,7 @@ export default function DashboardPage() {
 
           <div className="grid gap-4 lg:grid-cols-2 items-start">
             <DashboardMap
-              buses={liveBuses}
+              buses={mergedBuses}
               selectedBusId={selectedBus}
               onBusSelect={setSelectedBus}
             />
@@ -176,7 +192,7 @@ export default function DashboardPage() {
                   <div className="px-3 py-6 text-center text-sm text-base-content/40">No live buses right now</div>
                 ) : (
                   <div className="divide-y divide-base-200">
-                    {liveBuses.map((b) => (
+                    {mergedBuses.map((b) => (
                       <button
                         key={b.busId}
                         type="button"
