@@ -1,43 +1,21 @@
 {
-  "name": "bus-tracking-admin-portal",
+  "name": "bus-tracking-monorepo",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "packageManager": "npm@10.9.3",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@hookform/resolvers": "^5.4.0",
-    "@react-google-maps/api": "^2.20.8",
-    "@stomp/stompjs": "^7.3.0",
-    "@tanstack/react-query": "^5.101.1",
-    "@types/leaflet": "^1.9.21",
-    "axios": "^1.18.1",
-    "date-fns": "^4.4.0",
-    "leaflet": "^1.9.4",
-    "lucide-react": "^1.24.0",
-    "next": "16.2.6",
-    "react": "19.2.4",
-    "react-day-picker": "^10.0.1",
-    "react-dom": "19.2.4",
-    "react-hook-form": "^7.76.1",
-    "react-leaflet": "^5.0.0",
-    "sockjs-client": "^1.6.1",
-    "sonner": "^2.0.7",
-    "zod": "^4.4.3"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "dev:admin": "turbo run dev --filter=@bustrack/admin",
+    "dev:superadmin": "turbo run dev --filter=@bustrack/superadmin"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@types/sockjs-client": "^1.5.4",
-    "daisyui": "^5.5.20",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.6",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "turbo": "^2.6.0"
   }
 }

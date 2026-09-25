@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bus Tracking Admin Portal
 
-## Getting Started
+Monorepo (Turborepo + npm workspaces) for the bus-tracking admin applications.
 
-First, run the development server:
+## What's inside
+
+- **Apps**
+  - `apps/admin` → `@bustrack/admin` — operator/admin portal, dev on **:3000**
+  - `apps/superadmin` → `@bustrack/superadmin` — super-admin portal, dev on **:3001**
+- **Packages** (shared TypeScript source)
+  - `packages/types` → `@bustrack/types` — enums + models/api interfaces
+  - `packages/api-client` → `@bustrack/api-client` — axios services + libs
+  - `packages/hooks` → `@bustrack/hooks` — React Query domain hooks
+  - `packages/ui` → `@bustrack/ui` — shared DaisyUI components
+
+Every "app" is a standard Turborepo [Next.js](https://nextjs.org) app (App Router, React 19, TypeScript, Tailwind CSS 4 + DaisyUI). Packages are TS source consumed through package `exports` maps.
+
+## Getting started
+
+Prerequisites: Node 20+ (npm 10.x), `turbo` (bundled as root devDependency).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev            # dev all apps (admin :3000, superadmin :3001)
+npm run dev:admin      # admin only (:3000)  -- --filter=@bustrack/admin
+npm run dev:superadmin # superadmin only (:3001)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Building
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build   # turbo build across all workspaces
+npm run start   # start production servers
+npm run lint    # ESLint across workspaces
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Cross-package imports
 
-## Learn More
+Packages use **deep subpath imports** via their `exports` maps — never the root barrel when name collisions risk ambiguity:
 
-To learn more about Next.js, take a look at the following resources:
+```typescript
+import { Role, AccountStatus } from "@bustrack/types/enums";
+import { BusSummaryResponse } from "@bustrack/types/models/bus";
+import { listBuses } from "@bustrack/api-client/services/bus-service";
+import { useBus } from "@bustrack/hooks";
+import { Button } from "@bustrack/ui";
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+App-local code stays under `@/*` aliases; everything shared comes from `@bustrack/*`.
