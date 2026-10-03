@@ -18,7 +18,7 @@ const navItems = [
   },
   {
     href: "/admins",
-    label: "Create Admin",
+    label: "School Admins",
     icon: <UserPlus size={20} />,
   },
 ]

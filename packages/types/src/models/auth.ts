@@ -32,11 +32,3 @@ export interface AuthResponse {
   user: UserSummary | null;
   message: string | null;
 }
-
-export interface CreateAdminRequest {
-  name: string;
-  email: string;
-  password: string;
-  phone?: string;
-  schoolId: number;
-}

@@ -7,7 +7,7 @@ import { useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { loginUser } from "@bustrack/api-client/services/auth-service"
-import { AuthProvider } from "@/store/auth-context"
+import { Role } from "@bustrack/types/enums"
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -22,9 +22,19 @@ function LoginForm() {
   const loginMutation = useMutation({
     mutationFn: (body: LoginFormValues) => loginUser(body),
     onSuccess: (res) => {
-      const { accessToken, user } = res.data
+      const { accessToken, refreshToken, user } = res.data
+      // Credentials are valid but the account is not a platform super admin.
+      // Reject here rather than letting AuthGuard bounce, so a school ADMIN
+      // never gets a token sitting in localStorage.
+      if (user?.role !== Role.SUPER_ADMIN) {
+        toast.error("This account is not a platform super admin.")
+        return
+      }
       localStorage.setItem("auth_token", accessToken!)
       localStorage.setItem("auth_user", JSON.stringify(user))
+      // Persist the refresh token too - without it the axios interceptor has
+      // nothing to refresh with, so an expired access token logs you out.
+      if (refreshToken) localStorage.setItem("refresh_token", refreshToken)
       window.dispatchEvent(new StorageEvent("storage"))
       toast.success("Welcome back")
       router.replace("/")
@@ -126,9 +136,6 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  return (
-    <AuthProvider>
-      <LoginForm />
-    </AuthProvider>
-  )
+  // No AuthProvider wrapper here - the root layout already provides it.
+  return <LoginForm />
 }

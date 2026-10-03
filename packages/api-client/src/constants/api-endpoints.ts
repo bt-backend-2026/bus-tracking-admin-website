@@ -57,5 +57,14 @@ export const API_ENDPOINTS = {
 
   SUPER_ADMIN: {
     CREATE_ADMIN: "superadmin/create-admin",
+    CREATE_SUPER_ADMIN: "superadmin/create-superadmin",
+    SCHOOLS: {
+      BASE: "superadmin/schools",
+      BY_ID: (id: number | string) => `superadmin/schools/${id}`,
+      SUSPEND: (id: number | string) => `superadmin/schools/${id}/suspend`,
+      RESTORE: (id: number | string) => `superadmin/schools/${id}/restore`,
+      /** Hard delete. Only succeeds on an ARCHIVED, empty school. */
+      PERMANENT: (id: number | string) => `superadmin/schools/${id}/permanent`,
+    },
   },
 } as const;
