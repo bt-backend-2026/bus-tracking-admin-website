@@ -1,6 +1,6 @@
 import { API_ENDPOINTS } from "../constants/api-endpoints";
 import axiosClient from "../lib/axios";
-import type { APIResponse } from "@bustrack/types/api";
+import type { APIResponse, Page } from "@bustrack/types/api";
 import type { ParentListParams } from "@bustrack/types/api/parent";
 import type {
   ParentDetailResponse,
@@ -9,7 +9,7 @@ import type {
 } from "@bustrack/types/models/parent";
 
 export const listParents = async (params?: ParentListParams) => {
-  const res = await axiosClient.get<APIResponse<ParentSummaryResponse[]>>(
+  const res = await axiosClient.get<APIResponse<Page<ParentSummaryResponse>>>(
     API_ENDPOINTS.PARENT.BASE,
     { params },
   );

@@ -33,7 +33,7 @@ export default function DriverPage() {
   }
 
   const { data, isLoading, error } = useDrivers(params)
-  const drivers = data?.data ?? []
+  const drivers = data?.data.content ?? []
 
   return (
     <div className="space-y-6">

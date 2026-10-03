@@ -43,6 +43,7 @@ export default function LoginPage() {
 
           <form
             onSubmit={handleSubmit(onSubmit)}
+            method="post"
             className="flex w-full flex-col gap-4"
           >
             <label className="form-control w-full">
@@ -52,6 +53,7 @@ export default function LoginPage() {
               <input
                 {...register("email")}
                 type="email"
+                autoComplete="email"
                 placeholder="admin@example.com"
                 className="input input-bordered w-full"
               />
@@ -71,6 +73,7 @@ export default function LoginPage() {
               <input
                 {...register("password")}
                 type="password"
+                autoComplete="current-password"
                 placeholder="Enter password"
                 className="input input-bordered w-full"
               />

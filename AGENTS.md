@@ -43,6 +43,10 @@ No test framework is installed. No CI, pre-commit hooks, or formatter config.
 # Conventions
 
 - `.env*` files are gitignored; document required env vars here if added
+- **Env files are per-app, not at the repo root.** Next.js only loads `.env*` from the app directory it is running in (`apps/admin`, `apps/superadmin`). A root `.env` is silently ignored — `process.env.NEXT_PUBLIC_*` resolves to `undefined` at runtime with no error. Required vars:
+  - `apps/admin/.env` + `apps/superadmin/.env` → `NEXT_PUBLIC_API_URL=http://localhost:8080/api/`
+  - `apps/admin/.env` → `NEXT_PUBLIC_GOOGLE_MAPS_KEY` (used by `src/components/dashboard-map.tsx`)
+- Env var types are declared in ambient `.d.ts` files, one owner per file: `packages/api-client/src/env.d.ts` (API vars, referenced by both apps via `apps/*/env.d.ts`) and `apps/admin/env.d.ts` (admin-only vars). Add new `NEXT_PUBLIC_*` vars to the owning file, otherwise typos are not caught.
 - Dark mode via `prefers-color-scheme` (no toggle)
 - Geist font via `next/font/google`
 - API interactions live in service functions under packages (deep-subpath imports, no aliases outside the owning package)

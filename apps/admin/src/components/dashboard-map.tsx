@@ -45,18 +45,18 @@ function BusMapMarker({
       >
         <div className="relative">
           <div
-            className={`absolute -inset-2 rounded-full transition-all duration-300 ${
-              selected ? "bg-primary/20 scale-150" : "bg-primary/10"
+            className={`absolute -inset-1.5 rounded-full transition-all duration-300 ${
+              selected ? "bg-primary/20 scale-125" : "bg-primary/10"
             }`}
           />
           <div
             className={`relative flex items-center justify-center rounded-full shadow-sm transition-all duration-300 ${
               selected
-                ? "h-10 w-10 bg-primary shadow-lg scale-110"
-                : "h-8 w-8 bg-primary shadow-sm"
+                ? "h-9 w-9 bg-primary shadow-lg"
+                : "h-7 w-7 bg-primary shadow-sm"
             }`}
           >
-            <Bus size={selected ? 18 : 16} className="text-white" />
+            <Bus size={selected ? 16 : 14} className="text-white" />
           </div>
         </div>
         <span

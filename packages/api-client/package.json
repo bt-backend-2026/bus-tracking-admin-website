@@ -23,6 +23,7 @@
     "sockjs-client": "^1.6.1"
   },
   "devDependencies": {
+    "@types/node": "^20",
     "@types/sockjs-client": "^1.5.4",
     "typescript": "^5"
   }

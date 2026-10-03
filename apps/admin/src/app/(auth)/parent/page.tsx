@@ -31,7 +31,7 @@ export default function ParentPage() {
   }
 
   const { data, isLoading, error } = useParentList(params)
-  const parents = data?.data ?? []
+  const parents = data?.data.content ?? []
 
   return (
     <div className="space-y-6">

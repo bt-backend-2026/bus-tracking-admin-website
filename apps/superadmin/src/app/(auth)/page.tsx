@@ -124,7 +124,7 @@ export default function SuperAdminConsole() {
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-4">
+                <form onSubmit={handleSubmit(onSubmit)} method="post" className="flex w-full flex-col gap-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <label className="form-control w-full">
                       <div className="label">
@@ -164,6 +164,7 @@ export default function SuperAdminConsole() {
                       <input
                         {...register("email")}
                         type="email"
+                        autoComplete="email"
                         placeholder="admin@school.edu"
                         className="input input-bordered w-full"
                       />
@@ -180,6 +181,7 @@ export default function SuperAdminConsole() {
                       <input
                         {...register("password")}
                         type="password"
+                        autoComplete="new-password"
                         placeholder="Min 6 characters"
                         className="input input-bordered w-full"
                       />

@@ -1,6 +1,6 @@
 import { API_ENDPOINTS } from "../constants/api-endpoints";
 import axiosClient from "../lib/axios";
-import type { APIResponse } from "@bustrack/types/api";
+import type { APIResponse, Page } from "@bustrack/types/api";
 import type { DriverListParams } from "@bustrack/types/api/driver";
 import type {
   DriverDetailResponse,
@@ -9,7 +9,7 @@ import type {
 } from "@bustrack/types/models/driver";
 
 export const listDrivers = async (params?: DriverListParams) => {
-  const res = await axiosClient.get<APIResponse<DriverSummaryResponse[]>>(
+  const res = await axiosClient.get<APIResponse<Page<DriverSummaryResponse>>>(
     API_ENDPOINTS.DRIVER.BASE,
     { params },
   );
